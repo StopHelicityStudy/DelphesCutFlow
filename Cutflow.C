@@ -13,6 +13,7 @@ R__LOAD_LIBRARY(libDelphes)
 #endif
 
 #include <vector>
+#include <math.h>
 
 //------------------------------------------------------------------------------
 
@@ -91,23 +92,73 @@ void Cutflow(const char *inputFile)
   MissingET *MET;
   Jet *lepJet;
   Jet *hadSubJet;
+  Jet *hadSubJet2;
+  Jet *hadSubJet3;
   Electron *electron;
 
+  TFile f("Stop.root","recreate");
+
+
   // Book histograms
-  TH1 *histJetPT = new TH1F("jet_pt", "jet P_{T}", 100, 0.0, 100.0);
-  TH1 *histMass = new TH1F("mass", "M_{inv}(e_{1}, e_{2})", 100, 40.0, 140.0);
-  TH1 *lepJetMass = new TH1F("lepJetMass", "lepJetMass", 100, 0.0, 300);
-  TH1 *lepJetPT = new TH1F("lepJetPT", "lepJetPT", 100, 0.0, 1000);
-  TH1 *lepPt = new TH1F("lepPt", "lepPt", 100, 0, 1000);
-  TH1 *lepEta = new TH1F("lepEta", "lepEta", 100, -4, 4);
-  TH1 *lepRatio = new TH1F("lepRatio", "jet lepRatio{T}", 100, 0.0, 1.0);
-  TH1 *met = new TH1F("met", "met", 100, 0.0, 1000);
+
+  TH1 *TH_had_top_mass = new TH1F("had_top_mass", "had_top_mass", 100, 100, 250);
+  TH1 *TH_had_top_pt = new TH1F("had_top_pt", "had_top_pt", 100, 0.0, 1000);
+  TH1 *TH_had_top_eta = new TH1F("had_top_eta", "had_top_eta", 100, -4, 4);
+
+  TH1 *TH_lept_top_mass = new TH1F("lept_top_mass", "lept_top_mass", 100, 100, 250);
+  TH1 *TH_lept_top_pt = new TH1F("lept_top_pt", "lept_top_pt", 100, 0.0, 1000);
+  TH1 *TH_lept_top_eta = new TH1F("lept_top_eta", "lept_top_eta", 100, -4, 4);
+
+  TH1 *TH_lep_plus_JetMass = new TH1F("lep_JetMass", "lep_JetMass", 100, 0.0, 300);
+  TH1 *TH_lepJetPT = new TH1F("lepJetPT", "lepJetPT", 100, 0.0, 1000);
+  TH1 *TH_lepJetEta = new TH1F("lepJetEta", "lepJetEta", 100, -4, 4);
+
+  TH1 *TH_lepPt = new TH1F("lepPt", "lepPt", 100, 0, 1000);
+  TH1 *TH_lepEta = new TH1F("lepEta", "lepEta", 100, -4, 4);
+
+  TH1 *TH_lepRatio = new TH1F("lepRatio", "jet lepRatio", 10, 0.0, 1.0);
+  TH1 *TH_recLepRatio = new TH1F("recLepRatio", "jet recLepRatio", 10, 0.0, 1.0);
+  TH1 *TH_met = new TH1F("met", "met", 100, 0.0, 1000);
+
+  TH1 *TH_cos_lep_MET = new TH1F("cos_lep_MET", "cos_lep_MET", 100, -1, 1);
+  TH1 *TH_W_guess_mass = new TH1F("W_guess_mass", "W_guess_mass", 100, 50, 400);
+  TH1 *TH_DeltaR_lepJet_lepton = new TH1F("DeltaR_lepJet_lepton", "DeltaR_lepJet_lepton", 100, 0.0, 1.5);
+
+
+
+  TH1 *TH_noCuts_had_top_mass = new TH1F("noCuts_had_top_mass", "had_top_mass", 100, 100, 250);
+  TH1 *TH_noCuts_had_top_pt = new TH1F("noCuts_had_top_pt", "had_top_pt", 100, 0.0, 1000);
+  TH1 *TH_noCuts_had_top_eta = new TH1F("noCuts_had_top_eta", "had_top_eta", 100, -4, 4);
+
+  TH1 *TH_noCuts_lept_top_mass = new TH1F("noCuts_lept_top_mass", "lept_top_mass", 100, 100, 250);
+  TH1 *TH_noCuts_lept_top_pt = new TH1F("noCuts_lept_top_pt", "lept_top_pt", 100, 0.0, 1000);
+  TH1 *TH_noCuts_lept_top_eta = new TH1F("noCuts_lept_top_eta", "lept_top_eta", 100, -4, 4);
+
+  TH1 *TH_noCuts_lep_plus_JetMass = new TH1F("noCuts_lep_JetMass", "lep_JetMass", 100, 0.0, 300);
+  TH1 *TH_noCuts_lepJetPT = new TH1F("noCuts_lepJetPT", "lepJetPT", 100, 0.0, 1000);
+  TH1 *TH_noCuts_lepJetEta = new TH1F("noCuts_lepJetEta", "lepJetEta", 100, -4, 4);
+
+  TH1 *TH_noCuts_lepPt = new TH1F("noCuts_lepPt", "lepPt", 100, 0, 1000);
+  TH1 *TH_noCuts_lepEta = new TH1F("noCuts_lepEta", "lepEta", 100, -4, 4);
+
+  TH1 *TH_noCuts_lepRatio = new TH1F("noCuts_lepRatio", "jet lepRatio", 10, 0.0, 1.0);
+  TH1 *TH_noCuts_recLepRatio = new TH1F("noCuts_recLepRatio", "jet recLepRatio", 10, 0.0, 1.0);
+  TH1 *TH_noCuts_met = new TH1F("noCuts_met", "met", 100, 0.0, 1000);
+
+  TH1 *TH_noCuts_cos_lep_MET = new TH1F("noCuts_cos_lep_MET", "cos_lep_MET", 100, -1, 1);
+  TH1 *TH_noCuts_W_guess_mass = new TH1F("noCuts_W_guess_mass", "W_guess_mass", 100, 50, 400);
+  TH1 *TH_noCuts_DeltaR_lepJet_lepton = new TH1F("noCuts_DeltaR_lepJet_lepton", "DeltaR_lepJet_lepton", 100, 0.0, 1.5);
+
   TH1 *TH_cutflow = new TH1F("TH_cutflow", "cutflow", 10, -.5, 9.5);
+
+
+
+
   TCanvas c1;
 
   int muonCount = 0;
   int totalCount = 0;
-  bool verbose = true;
+  bool verbose = false;
   int cutflow_count = 0;
   int nBJets_near_lep = 0;
   int nBJets_int_top = 0;
@@ -122,6 +173,10 @@ void Cutflow(const char *inputFile)
     TLorentzVector TL_lepton;
     TLorentzVector TL_leptJet;
     TLorentzVector TL_hadTop;
+    TLorentzVector TL_lepTop_guess;
+    TLorentzVector TL_neutrino_guess;
+    TLorentzVector TL_W_guess;
+    TLorentzVector TL_object_closest_to_MET;
 
 
     // Load selected branches with data from specified event
@@ -132,6 +187,12 @@ void Cutflow(const char *inputFile)
 
     //number of events
     totalCount = totalCount +1;
+
+
+    //get met
+    MET = (MissingET*) branchMet->At(0);
+    TL_object_closest_to_MET = -MET->P4();
+
 
     //get lepton
     TL_lepton.SetPtEtaPhiM(0,0,0,0);
@@ -148,11 +209,8 @@ void Cutflow(const char *inputFile)
     if(verbose) std::cout << "\t lept pt " <<  TL_lepton.Pt() << std::endl;
 
 
-    //get met
-    MET = (MissingET*) branchMet->At(0);
-
-
-    // select for highest bjet near muon
+    // select for highest bjet near lepton
+     std::cout << "\tone jet combos \n";
     if(branchJet->GetEntries() > 0 and TL_lepton.Pt() > 0)
     {
       nBJets_near_lep = 0;
@@ -170,82 +228,228 @@ void Cutflow(const char *inputFile)
     }
     if(verbose) std::cout << "\t selected: lept jet DeltaR, btag, nBJets_near_lep " << TL_lepton.DeltaR(TL_leptJet) << " " << nBJets_near_lep<< " " <<  std::endl;
 
-    TL_v.clear();
-    // select for top subjets
+
+    // find best three jet combo
+    float bestMass = 1000;
+    float nextBest = 1000;
+    float topMass = 172.5;
     if(branchJet->GetEntries() > 0 and TL_lepton.Pt() > 0)
     {
       nBJets_int_top = 0;
+      //one jet
       for(int i=0; i < branchJet->GetEntries(); i++){
         hadSubJet = (Jet*) branchJet->At(i);
         if (hadSubJet->PT < 25) continue;
         if (TL_lepton.DeltaR(hadSubJet->P4()) < 1.5) continue;
 
-        TL_hadTop = TL_hadTop + hadSubJet->P4();
+        if(verbose) std::cout << "\t \t mass of top " << hadSubJet->P4().M() << std::endl;
 
-        TL_v.push_back(hadSubJet->P4());
-        if(verbose) std::cout << "\t mass of top " << TL_hadTop.M() << std::endl;
+        if( abs( hadSubJet->P4().M() - topMass)  <  abs( TL_hadTop.M() - topMass)  )
+        {
+          nextBest = bestMass;
+          TL_hadTop = hadSubJet->P4();
+          bestMass = hadSubJet->P4().M();
+        }
+
         nBJets_int_top = nBJets_int_top + 1;
+      }
+      std::cout << "\ttwo jet combos \n";
+
+
+      // two jet combinations
+      TLorentzVector tempTop;
+      for(int i=0; i < branchJet->GetEntries(); i++){
+        hadSubJet = (Jet*) branchJet->At(i);
+        if (hadSubJet->PT < 25) continue;
+        if (TL_lepton.DeltaR(hadSubJet->P4()) < 1.5) continue;
+
+
+        for(int j=i+1; j < branchJet->GetEntries(); j++){
+          hadSubJet2 = (Jet*) branchJet->At(j);
+          if (hadSubJet2->PT < 25) continue;
+          if (TL_lepton.DeltaR(hadSubJet2->P4()) < 1.5) continue;
+
+          tempTop = (hadSubJet->P4()+hadSubJet2->P4());
+          if(verbose) std::cout << "\t \t mass of top " << tempTop.M() << " " << i << " " << j << std::endl;
+  
+          if( abs( tempTop.M() - topMass)  <  abs( TL_hadTop.M() - topMass)  )
+          {
+            nextBest = bestMass;
+            TL_hadTop = tempTop;
+            bestMass = tempTop.M();
+          }
+        }
+      }
+
+      std::cout << "\tthree jet combos \n";
+      // three jet combinations
+      for(int i=0; i < branchJet->GetEntries(); i++){
+        hadSubJet = (Jet*) branchJet->At(i);
+        if (hadSubJet->PT < 25) continue;
+        if (TL_lepton.DeltaR(hadSubJet->P4()) < 1.5) continue;
+
+
+        for(int j=i+1; j < branchJet->GetEntries(); j++){
+          hadSubJet2 = (Jet*) branchJet->At(j);
+          if (hadSubJet2->PT < 25) continue;
+          if (TL_lepton.DeltaR(hadSubJet2->P4()) < 1.5) continue;
+            for(int j=i+1; j < branchJet->GetEntries(); j++){
+              hadSubJet3 = (Jet*) branchJet->At(j);
+              if (hadSubJet3->PT < 25) continue;
+              if (TL_lepton.DeltaR(hadSubJet3->P4()) < 1.5) continue;
+
+              tempTop = (hadSubJet->P4()+hadSubJet2->P4()+hadSubJet3->P4());
+              if(verbose) std::cout << "\t \t mass of top " << tempTop.M() << " " << i << " " << j << std::endl;
+      
+              if( abs( tempTop.M() - topMass)  <  abs( TL_hadTop.M() - topMass)  )
+              {
+                nextBest = bestMass;
+                TL_hadTop = tempTop;
+                bestMass = tempTop.M();
+              }
+          }
+        }
       }
       std::cout << "\n";
 
-      //TL_hadTop = dropJet(TL_hadTop, branchJet, TL_lepton, verbose);
+
     }
 
+     if(verbose) std::cout << "\t mass of top " << TL_hadTop.M() << " next best " << nextBest << std::endl;
 
 
-/*
+
+
+    TH_noCuts_lepEta->Fill(TL_leptJet.Eta());
+    TH_noCuts_lepPt->Fill(TL_leptJet.Pt());
+    TH_noCuts_lepRatio->Fill(TL_leptJet.Pt()/(TL_leptJet.Pt() + TL_lepton.Pt()) );
+    TH_noCuts_lepJetPT->Fill(TL_leptJet.Pt());
+    TH_noCuts_lepJetEta->Fill(TL_leptJet.Eta());
+    TH_noCuts_lep_plus_JetMass->Fill( (TL_leptJet + TL_lepton).M() );
+    TH_noCuts_met->Fill(MET->MET);
+    TH_noCuts_had_top_mass->Fill(TL_hadTop.M());
+    TH_noCuts_had_top_pt->Fill(TL_hadTop.Pt());
+    TH_noCuts_had_top_eta->Fill(TL_hadTop.Eta());
+    TH_noCuts_lept_top_mass->Fill(TL_lepTop_guess.M());
+    TH_noCuts_lept_top_pt->Fill(TL_lepTop_guess.Pt());
+    TH_noCuts_lept_top_eta->Fill(TL_lepTop_guess.Eta());
+    TH_noCuts_recLepRatio->Fill(TL_leptJet.E()/TL_lepTop_guess.E());
+    TH_noCuts_cos_lep_MET->Fill(cos(TL_lepton.DeltaPhi(MET->P4()) ));
+    TH_noCuts_W_guess_mass->Fill(TL_W_guess.M());
+    TH_noCuts_DeltaR_lepJet_lepton->Fill(TL_leptJet.DeltaR(TL_lepton));
+
+
 
     cutflow_count = 0;
     TH_cutflow->Fill(cutflow_count);
-    //TH_cutflow->GetXaxis()->SetBinLabel(cutflow_count,"all muon");
+    cutflow_count = cutflow_count + 1;
+
+    if (MET->MET < 125) continue; 
+    TH_cutflow->Fill(cutflow_count);
     cutflow_count = cutflow_count + 1;
 
 
-    // cut on muon pt and jet pt
-    if (muon->PT < 30 || lepJet->PT < 30 ) continue;
+    if (TL_lepton.Pt() < 20 || abs(TL_lepton.Eta()) > 2.4) continue; 
+    TH_cutflow->Fill(cutflow_count);
+    cutflow_count = cutflow_count + 1;
+
+    if (TL_leptJet.Pt() < 25 || abs(TL_leptJet.Eta()) > 2.4) continue; 
+    TH_cutflow->Fill(cutflow_count);
+    cutflow_count = cutflow_count + 1;
+
+    if( abs(cos(TL_lepton.DeltaPhi(MET->P4()) ) ) > 0.7) continue;
+    TH_cutflow->Fill(cutflow_count);
+    cutflow_count = cutflow_count + 1;
+
+    if(  abs( TL_hadTop.M() - topMass)  > 15) continue;
+    TH_cutflow->Fill(cutflow_count);
+    cutflow_count = cutflow_count + 1;
+
+    TL_lepTop_guess = -TL_hadTop;
+    TL_neutrino_guess = TL_lepTop_guess -TL_leptJet - TL_lepton;
+    TL_W_guess = TL_lepton + TL_neutrino_guess;
+
+    float massW = 80.4;
+    if(  abs( TL_W_guess.M() - massW)  < 40) continue;
+    TH_cutflow->Fill(cutflow_count);
+    cutflow_count = cutflow_count + 1;
 
 
-    //fill hists
-    lepEta->Fill(muon->Eta);
-    lepPt->Fill(muon->PT);
-    lepRatio->Fill(lepJet->PT/(lepJet->PT + TL_lepton.Pt()) );
-    lepJetPT->Fill(lepJet->PT);
-    lepJetMass->Fill( (lepJet->P4() + TL_lepton).M() );
-    met->Fill(MET->MET);
+    if(  TL_leptJet.DeltaR(TL_lepton)  > 1.5 ) continue; //pointless cut as it is required already
+    TH_cutflow->Fill(cutflow_count);
+    cutflow_count = cutflow_count + 1;
 
-    if(verbose) std::cout << "end event\n" << std::endl;
-    */
+    if(abs(MET->P4().DeltaPhi(TL_lepton))  < abs(MET->P4().DeltaPhi(TL_object_closest_to_MET)) )
+    {
+      TL_object_closest_to_MET = TL_lepton;
+    }
+    if(abs(MET->P4().DeltaPhi(TL_hadTop))  < abs(MET->P4().DeltaPhi(TL_object_closest_to_MET)) )
+    {
+      TL_object_closest_to_MET = TL_hadTop;
+    }
+    if(abs(MET->P4().DeltaPhi(TL_leptJet))  < abs(MET->P4().DeltaPhi(TL_object_closest_to_MET)) )
+    {
+      TL_object_closest_to_MET = TL_leptJet;
+    }
+    if(verbose) std::cout << " \tDeltaR met and closest object " << abs(MET->P4().DeltaPhi(TL_object_closest_to_MET)) << std::endl;
+
+
+    /*if(  abs(MET->P4().DeltaR(TL_object_closest_to_MET))  > 1.5  ||  abs(MET->P4().DeltaR(TL_object_closest_to_MET))  < 0.8 ) continue; //pointless cut as it is required already
+    TH_cutflow->Fill(cutflow_count);
+    cutflow_count = cutflow_count + 1;*/
+
+
+    std::cout << "fill hists" <<  std::endl;
+    TH_lepEta->Fill(TL_leptJet.Eta());
+    TH_lepPt->Fill(TL_leptJet.Pt());
+    TH_lepRatio->Fill(TL_leptJet.Pt()/(TL_leptJet.Pt() + TL_lepton.Pt()) );
+    TH_lepJetPT->Fill(TL_leptJet.Pt());
+    TH_lepJetEta->Fill(TL_leptJet.Eta());
+    TH_lep_plus_JetMass->Fill( (TL_leptJet + TL_lepton).M() );
+    TH_met->Fill(MET->MET);
+    TH_had_top_mass->Fill(TL_hadTop.M());
+    TH_had_top_pt->Fill(TL_hadTop.Pt());
+    TH_had_top_eta->Fill(TL_hadTop.Eta());
+    TH_lept_top_mass->Fill(TL_lepTop_guess.M());
+    TH_lept_top_pt->Fill(TL_lepTop_guess.Pt());
+    TH_lept_top_eta->Fill(TL_lepTop_guess.Eta());
+    TH_recLepRatio->Fill(TL_leptJet.E()/TL_lepTop_guess.E());
+    TH_cos_lep_MET->Fill(cos(TL_lepton.DeltaPhi(MET->P4()) ));
+    TH_W_guess_mass->Fill(TL_W_guess.M());
+    TH_DeltaR_lepJet_lepton->Fill(TL_leptJet.DeltaR(TL_lepton));
+
+    
   }
 
 
   //end job
-  std::cout << "muon events vs total " << muonCount << " " << totalCount << std::endl;
+  //std::cout << "muon events vs total " << muonCount << " " << totalCount << std::endl;
 
 
   TH_cutflow->Draw();
   c1.SaveAs("output/cutflow.png");
 
   // Show resulting histograms
-  histJetPT->Draw();
-  c1.SaveAs("output/test.png");
 
-  lepPt->Draw();
+  TH_lepPt->Draw();
   c1.SaveAs("output/lepPt.png");
 
-  lepJetMass->Draw();
-  c1.SaveAs("output/lepJetMass.png");
+  TH_lep_plus_JetMass->Draw();
+  c1.SaveAs("output/lep_plus_JetMass.png");
 
-  lepEta->Draw();
+  TH_lepEta->Draw();
   c1.SaveAs("output/lepEta.png");
 
-  lepRatio->Draw();
+  TH_lepRatio->Draw();
   c1.SaveAs("output/lepRatio.png");
 
-  lepJetPT->Draw();
+  TH_lepJetPT->Draw();
   c1.SaveAs("output/lepJetPT.png");
 
-  met->Draw();
+  TH_met->Draw();
   c1.SaveAs("output/met.png");
+
+  f.Write();
 
 }
 
